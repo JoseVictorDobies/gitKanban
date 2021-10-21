@@ -6,6 +6,8 @@ const app = express();
 const jsonParser = bodyParser.json();
 app.use(cors());
 
+let port = 3000;
+
 let dataServer = {};
 let arrTags = [];
 let mapTagsAntennas = {};
@@ -152,6 +154,6 @@ app.get('/data', (req, res) => {
     return res.send(JSON.stringify({ inventory }));
 });
 
-app.listen(3001, () => {
-    console.log('App running on port 3000');
+app.listen(port, () => {
+    console.log(`App running on port ${port}`);
 })
