@@ -9,7 +9,34 @@ app.use(cors());
 let dataServer = {};
 let arrTags = [];
 let mapTagsAntennas = {};
-let inventory = [];
+let inventoryArr = [];
+
+let inventory = {
+    "productA": {
+        name: "Bateria 12V 7Ah",
+        image: "./src/images/bateria.jpg",
+        qtdMin: 1,
+        qtdIdeal: 3,
+        qtd: 0,
+        ids: []
+    }, 
+    "productB": {
+        name: "Bobina cobre esmaltado",
+        image: "./src/images/bobina.jpg",
+        qtdMin: 1,
+        qtdIdeal: 2,
+        qtd: 0,
+        ids: []
+    }, 
+    "productC": {
+        name: "Multímetro Minipa",
+        image: "./src/images/multimentro.jpg",
+        qtdMin: 0,
+        qtdIdeal: 1,
+        qtd: 0,
+        ids: []
+    }, 
+}
 
 let tagsProd = {
     "13508321591558200320517128226": "productA",
@@ -30,11 +57,30 @@ function check(){
             let arrTimeB = dataServer[val][mapTagsAntennas[val][1]];
             if ((Date.now() - arrTimeA[(arrTimeA.length - 1)] > 1000) && (Date.now() - arrTimeB[(arrTimeB.length - 1)] > 1000)){
                 if (isAscending(mapTagsAntennas[val])){
-                    console.log("Entrou!");
-                    inventory.indexOf(val) === -1 ? inventory.push(val) : console.log("Já estava dentro!");
+                    if (inventoryArr.indexOf(val) === -1) {
+                        console.log("Entrou!");
+                        inventoryArr.push(val);
+                        let obj = inventory[tagsProd[val]];
+                        let newArr = obj["ids"];
+                        let objTime = {
+                            time: Math.round(Date.now() / 1000),
+                            id: val
+                        }
+                        newArr.push(objTime);
+                        obj["qtd"] += 1;
+                        obj["ids"] = newArr;
+                    }
                 } else {
-                    console.log("Saiu!");
-                    inventory.indexOf(val) !== -1 ? inventory.splice(inventory.indexOf(val), 1) : console.log("Não entrou!");
+                    if (inventoryArr.indexOf(val) !== -1) {
+                        console.log("Saiu!");
+                        inventoryArr.splice(inventoryArr.indexOf(val), 1)
+                        let obj = inventory[tagsProd[val]];
+                        let newArr = obj["ids"];
+                        obj["qtd"] += -1;
+                        let index = newArr.findIndex(x => x.id===val);
+                        newArr.splice(index, 1);
+                        obj["ids"] = newArr;
+                    }
                 }
                 delete dataServer[val];
                 arrTags.splice(arrTags.indexOf(val), 1);
@@ -70,8 +116,7 @@ function processData(body){
     } else {
         mapTagsAntennas[body.id] = [body.antenna]
     }
-    //arrTags.findIndex( x => x===body.id) === -1 ? arrTags.push(body.id) : false;
-    //arrIds.findIndex( x => (x.antenna===body.antenna && x.id===body.id)) === -1 ? arrIds.push(body) : false;
+
     let arrMillis = [];
     if (dataServer[body.id]){
         arrMillis = dataServer[body.id][body.antenna];
@@ -96,14 +141,17 @@ app.post('/data', jsonParser, (req, res) => {
         processData(val);
     });
 
-    
     return;
 });
 
-app.get('/data', (req, res) => {
-    return res.send(JSON.stringify({ dataServer, arrTags, mapTagsAntennas, inventory }));
+app.get('/dataInfo', (req, res) => {
+    return res.send(JSON.stringify({ dataServer, arrTags, mapTagsAntennas, inventoryArr }));
 });
 
-app.listen(3000, () => {
+app.get('/data', (req, res) => {
+    return res.send(JSON.stringify({ inventory }));
+});
+
+app.listen(3001, () => {
     console.log('App running on port 3000');
 })
